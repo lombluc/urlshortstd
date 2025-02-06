@@ -9,11 +9,19 @@ from shorten import URLShortener
 url_shortener = URLShortener(Path("data/short_url.db"))
 
 
-class SimpleHandler(BaseHTTPRequestHandler):
+class URLHandler(BaseHTTPRequestHandler):
     redirect_path = "/r"
 
     def do_GET(self):
-        if self.path.startswith(self.redirect_path + "/"):
+        if self.path == "/stats":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+
+            table = url_shortener.get_stats_as_html()
+            self.wfile.write(table.encode("utf-8"))
+
+        elif self.path.startswith(self.redirect_path + "/"):
             redirect_string = self.path[3:]
             new_url = url_shortener.get_redirect(redirect_string)
             if new_url:
@@ -42,13 +50,13 @@ class SimpleHandler(BaseHTTPRequestHandler):
                 shortened_url = url_shortener.shorten_url(post_data.get("url", ""))
                 new_url = f"{self.headers["Host"]}{self.redirect_path}/{shortened_url}"
 
-                b_url = bytearray()
-                b_url.extend(map(ord, new_url))
+                # b_url = bytearray()
+                # b_url.extend(map(ord, new_url))
 
                 self.send_response(200)
                 self.send_header("Content-type", "text/plain")
                 self.end_headers()
-                self.wfile.write(b_url)
+                self.wfile.write(new_url.encode("utf-8"))
             else:
                 self.send_response(404)
                 self.send_header("Content-type", "text/plain")
@@ -61,7 +69,7 @@ class SimpleHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"Not Found")
 
 
-def run(server_class=HTTPServer, handler_class=SimpleHandler, port=8000):
+def run(server_class=HTTPServer, handler_class=URLHandler, port=8000):
     server_address = ("", port)
     httpd = server_class(server_address, handler_class)
     print(f"Server running at http://localhost:{port}...")
