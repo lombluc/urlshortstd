@@ -6,7 +6,7 @@ from sys import argv
 from shorten import URLShortener
 
 
-url_shortener = URLShortener(Path("data/db.json"))
+url_shortener = URLShortener(Path("data/short_url.db"))
 
 
 class SimpleHandler(BaseHTTPRequestHandler):
