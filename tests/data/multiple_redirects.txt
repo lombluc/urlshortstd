@@ -1,0 +1,8 @@
+
+            <html>
+            <head><title>Item Table</title></head>
+            <body>
+            <h2>Shortened URL stats</h2>
+            <table border='1'>
+                <tr><th>Time created</th><th>Short URL</th><th>Redirect</th><th>Times redirected</th></tr>
+            <tr><td>2025-02-12 11:37:47.887614</td><td>tt8GUc</td><td>https://google.com</td><td>2</td></tr><tr><td>2025-02-12 11:37:47.897245</td><td>TNq5nM</td><td>https://bing.com</td><td>1</td></tr></table></body></html>
