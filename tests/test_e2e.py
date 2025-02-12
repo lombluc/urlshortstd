@@ -5,7 +5,6 @@ from pathlib import Path
 import sqlite3
 import time
 import unittest
-from urllib.parse import urlencode
 
 from src.app import URLHandler
 from src.shorten import URLShortener
