@@ -4,5 +4,5 @@
             <body>
             <h2>Shortened URL stats</h2>
             <table border='1'>
-                <tr><th>Short URL</th><th>Times redirected</th><th>Time created</th></tr>
+                <tr><th>Time created</th><th>Short URL</th><th>Redirect</th><th>Times redirected</th></tr>
             </table></body></html>

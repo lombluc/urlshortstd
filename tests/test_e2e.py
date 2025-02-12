@@ -33,22 +33,22 @@ class TestE2E(unittest.TestCase):
         con.close()
         return response
 
-    # def test_base_url(self):
-    #     response = self.make_request("GET", "/", "", {})
-    #     assert response.status == 404
-    #     assert response.reason == "Not Found"
+    def test_base_url(self):
+        response = self.make_request("GET", "/", "", {})
+        assert response.status == 404
+        assert response.reason == "Not Found"
 
-    # def test_empty_stats(self):
-    #     response = self.make_request("GET", "/stats", "", {})
+    def test_empty_stats(self):
+        response = self.make_request("GET", "/stats", "", {})
 
-    #     with open("tests/data/empty_stats.txt", "r", encoding="utf-8") as f:
-    #         assert response.read().decode() == f.read()
+        with open("tests/data/empty_stats.txt", "r", encoding="utf-8") as f:
+            assert response.read().decode() == f.read()
 
-    # def test_wrong_short(self):
-    #     response = self.make_request("GET", "/r/notfound", "", {})
+    def test_wrong_short(self):
+        response = self.make_request("GET", "/r/notfound", "", {})
 
-    #     assert response.status == 404
-    #     assert response.reason == "Not Found"
+        assert response.status == 404
+        assert response.reason == "Not Found"
 
     def test_redirect(self):
         response = self.make_request(
