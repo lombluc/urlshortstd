@@ -6,12 +6,9 @@ from sys import argv
 from src.shorten import URLShortener
 
 
-url_short = URLShortener(Path("data/short_url.db"))
-
-
 class URLHandler(BaseHTTPRequestHandler):
     redirect_path = "/r"
-    url_shortener = url_short
+    url_shortener = URLShortener(Path("data/short_url.db"))
 
     def do_GET(self):
         if self.path == "/stats":

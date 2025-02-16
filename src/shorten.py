@@ -26,7 +26,7 @@ class URLShortener:
             cur = con.cursor()
             cur.execute(
                 "INSERT INTO log VALUES(?, ?)",
-                (datetime.datetime.now(), short_url),
+                (datetime.datetime.now(tz=datetime.timezone.utc), short_url),
             )
             con.commit()
             cur.execute(f"SELECT redirect FROM url where short_url = ?", (short_url,))
@@ -47,7 +47,7 @@ class URLShortener:
             cur = con.cursor()
             cur.execute(
                 "INSERT INTO url VALUES(?, ?, ?)",
-                (short_url, redirect, datetime.datetime.now()),
+                (short_url, redirect, datetime.datetime.now(tz=datetime.timezone.utc)),
             )
             con.commit()
 
@@ -81,3 +81,25 @@ class URLShortener:
 
         html += "</table></body></html>"
         return html
+
+    def init_db(self):
+        with sqlite3.connect(self.db_path) as con:
+            cur = con.cursor()
+            cur.execute("DROP TABLE IF EXISTS url")
+            cur.execute("DROP TABLE IF EXISTS log")
+            cur.execute("PRAGMA foreign_keys = ON")
+            cur.execute(
+                """CREATE TABLE url(
+                    short_url text PRIMARY KEY NOT NULL,
+                    redirect text NOT NULL,
+                    time_created DATETIME NOT NULL
+                    )"""
+            )
+            cur.execute(
+                """CREATE TABLE log(
+                    time DATETIME NOT NULL,
+                    short_url text NOT NULL,
+                    FOREIGN KEY (short_url)
+                        REFERENCES url (short_url)
+                    )"""
+            )
