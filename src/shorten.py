@@ -64,7 +64,8 @@ class URLShortener:
                 FROM url u
                 LEFT JOIN log l
                     ON u.short_url = l.short_url
-                GROUP BY u.time_created, u.short_url, u.redirect
+                GROUP BY u.short_url
+                ORDER BY u.time_created, u.redirect
                 """)
             stats = cur.fetchall()
         html = """
