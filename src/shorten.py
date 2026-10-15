@@ -9,6 +9,7 @@ class URLShortener:
     def __init__(self, db_path: Path, url_length: int = 6):
         self.url_length = url_length
         self.db_path = db_path
+        self.init_db()
 
     def shorten_url(self, url: str) -> str:
         all_short_urls = self.get_short_urls()
@@ -54,8 +55,7 @@ class URLShortener:
     def get_stats_as_html(self):
         with sqlite3.connect(self.db_path) as con:
             cur = con.cursor()
-            cur.execute(
-                """
+            cur.execute("""
                 SELECT
                     u.time_created,
                     u.short_url,
@@ -65,8 +65,7 @@ class URLShortener:
                 LEFT JOIN log l
                     ON u.short_url = l.short_url
                 GROUP BY u.time_created, u.short_url, u.redirect
-                """
-            )
+                """)
             stats = cur.fetchall()
         html = """
             <html>
@@ -83,23 +82,18 @@ class URLShortener:
         return html
 
     def init_db(self):
+        self.db_path.parent.mkdir(exist_ok=True, parents=True)
         with sqlite3.connect(self.db_path) as con:
             cur = con.cursor()
-            cur.execute("DROP TABLE IF EXISTS url")
-            cur.execute("DROP TABLE IF EXISTS log")
             cur.execute("PRAGMA foreign_keys = ON")
-            cur.execute(
-                """CREATE TABLE url(
+            cur.execute("""CREATE TABLE IF NOT EXISTS url(
                     short_url text PRIMARY KEY NOT NULL,
                     redirect text NOT NULL,
                     time_created DATETIME NOT NULL
-                    )"""
-            )
-            cur.execute(
-                """CREATE TABLE log(
+                    )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS log(
                     time DATETIME NOT NULL,
                     short_url text NOT NULL,
                     FOREIGN KEY (short_url)
                         REFERENCES url (short_url)
-                    )"""
-            )
+                    )""")
