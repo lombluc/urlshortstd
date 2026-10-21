@@ -16,7 +16,6 @@ server_port = 7775
 
 
 class TestE2E(unittest.TestCase):
-    @classmethod
     def setUp(cls):
         with sqlite3.connect(test_db_path) as con:
             cur = con.cursor()
@@ -49,24 +48,24 @@ class TestE2E(unittest.TestCase):
         res_table_data["Short URL"] = []
         ref_table_data["Short URL"] = []
 
-        assert res_table_data == ref_table_data
+        self.assertEqual(res_table_data, ref_table_data)
 
     def test_base_url(self):
         response = self.make_request("GET", "/", "", {})
-        assert response.status == 404
-        assert response.reason == "Not Found"
+        self.assertEqual(response.status, 404)
+        self.assertEqual(response.reason, "Not Found")
 
     def test_empty_stats(self):
         response = self.make_request("GET", "/stats", "", {})
 
         with open("tests/data/empty_stats.txt", "r", encoding="utf-8") as f:
-            assert response.read().decode() == f.read()
+            self.assertEqual(response.read().decode(), f.read())
 
     def test_wrong_short(self):
         response = self.make_request("GET", "/r/notfound", "", {})
 
-        assert response.status == 404
-        assert response.reason == "Not Found"
+        self.assertEqual(response.status, 404)
+        self.assertEqual(response.reason, "Not Found")
 
     def test_single_redirect(self):
         response = self.make_request(
@@ -78,8 +77,8 @@ class TestE2E(unittest.TestCase):
         redirect = response.read().decode()
         response = self.make_request("GET", redirect[14:], "", {})
 
-        assert response.status == 302
-        assert response.getheader("Location") == "https://google.com"
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.getheader("Location"), "https://google.com")
 
     def test_single_run(self):
         response = self.make_request(
@@ -113,16 +112,16 @@ class TestE2E(unittest.TestCase):
         short2 = response.read().decode()
 
         response = self.make_request("GET", short1[14:], "", {})
-        assert response.status == 302
-        assert response.getheader("Location") == "https://google.com"
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.getheader("Location"), "https://google.com")
 
         response = self.make_request("GET", short1[14:], "", {})
-        assert response.status == 302
-        assert response.getheader("Location") == "https://google.com"
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.getheader("Location"), "https://google.com")
 
         response = self.make_request("GET", short2[14:], "", {})
-        assert response.status == 302
-        assert response.getheader("Location") == "https://bing.com"
+        self.assertEqual(response.status, 302)
+        self.assertEqual(response.getheader("Location"), "https://bing.com")
 
         response = self.make_request("GET", "/stats", "", {})
 
