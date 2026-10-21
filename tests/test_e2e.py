@@ -129,34 +129,6 @@ class TestE2E(unittest.TestCase):
             "tests/data/multiple_redirects.txt", response.read().decode()
         )
 
-    # def test_group_by(self):
-    #     response = self.make_request(
-    #         "POST",
-    #         "/shorten",
-    #         '{"url": "https://google.com"}',
-    #         {"Content-Type": "application/json"},
-    #     )
-    #     short1 = response.read().decode()
-    #     response = self.make_request(
-    #         "POST",
-    #         "/shorten",
-    #         '{"url": "https://bing.com"}',
-    #         {"Content-Type": "application/json"},
-    #     )
-    #     short2 = response.read().decode()
-
-    #     self.make_request("GET", short1[14:], "", {})
-    #     self.make_request("GET", short1[14:], "", {})
-    #     self.make_request("GET", short2[14:], "", {})
-
-    #     with sqlite3.connect(test_db_path) as con:
-    #         cur = con.cursor()
-    #         cur.execute(
-    #             "EXPLAIN SELECT time AS last_accessed FROM log GROUP BY short_url"
-    #         )
-    #         res = cur.fetchall()
-    #     print(res)
-
 
 def setUpModule():
     server_address = ("", server_port)
