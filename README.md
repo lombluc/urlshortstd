@@ -8,6 +8,6 @@ Make new shortened url with post request like curl example:
 `curl -X POST http://localhost:8000/shorten -H "Content-Type: application/json" -d '{"url": "https://google.com"}'`
 
 Run tests with
-`python -m tests.test_e2e`
+`python -m unittest`
 
 Note that this is not secure and should not be used.
