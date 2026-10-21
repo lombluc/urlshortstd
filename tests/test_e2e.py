@@ -16,7 +16,7 @@ server_port = 7775
 
 
 class TestE2E(unittest.TestCase):
-    def setUp(cls):
+    def setUp(self):
         with sqlite3.connect(test_db_path) as con:
             cur = con.cursor()
             cur.execute("DELETE FROM url")

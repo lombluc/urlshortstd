@@ -1,3 +1,5 @@
+from collections.abc import Generator
+from contextlib import closing, contextmanager
 import datetime
 from pathlib import Path
 import random
@@ -11,6 +13,13 @@ class URLShortener:
         self.db_path = db_path
         self.init_db()
 
+    @contextmanager
+    def _connect(self) -> Generator[sqlite3.Connection]:
+        with closing(sqlite3.connect(self.db_path)) as con, con:
+            cur = con.cursor()
+            cur.execute("PRAGMA foreign_keys = ON")
+            yield con
+
     def shorten_url(self, url: str) -> str:
         all_short_urls = self.get_short_urls()
         while True:
@@ -22,38 +31,37 @@ class URLShortener:
             self.add_to_db(short_url, url)
             return short_url
 
-    def get_redirect(self, short_url: str) -> str:
-        with sqlite3.connect(self.db_path) as con:
+    def get_redirect(self, short_url: str) -> str | None:
+        with self._connect() as con:
             cur = con.cursor()
-            cur.execute(
-                "INSERT INTO log VALUES(?, ?)",
-                (datetime.datetime.now(tz=datetime.timezone.utc), short_url),
-            )
-            con.commit()
-            cur.execute(f"SELECT redirect FROM url where short_url = ?", (short_url,))
+            cur.execute("SELECT redirect FROM url where short_url = ?", (short_url,))
             res = cur.fetchall()
+            if res:
+                cur.execute(
+                    "INSERT INTO log VALUES(?, ?)",
+                    (datetime.datetime.now(tz=datetime.timezone.utc), short_url),
+                )
         if res:
             return res[0][0]
-        return ""
+        return None
 
     def get_short_urls(self) -> set:
-        with sqlite3.connect(self.db_path) as con:
+        with self._connect() as con:
             cur = con.cursor()
             cur.execute("SELECT short_url FROM url")
             col = cur.fetchall()
         return set(r[0] for r in col)
 
     def add_to_db(self, short_url: str, redirect: str) -> None:
-        with sqlite3.connect(self.db_path) as con:
+        with self._connect() as con:
             cur = con.cursor()
             cur.execute(
                 "INSERT INTO url VALUES(?, ?, ?)",
                 (short_url, redirect, datetime.datetime.now(tz=datetime.timezone.utc)),
             )
-            con.commit()
 
     def get_stats_as_html(self):
-        with sqlite3.connect(self.db_path) as con:
+        with self._connect() as con:
             cur = con.cursor()
             cur.execute("""
                 SELECT
@@ -65,7 +73,7 @@ class URLShortener:
                 LEFT JOIN log l
                     ON u.short_url = l.short_url
                 GROUP BY u.short_url
-                ORDER BY u.time_created, u.redirect
+                ORDER BY u.time_created, u.rowid
                 """)
             stats = cur.fetchall()
         html = """
@@ -84,9 +92,8 @@ class URLShortener:
 
     def init_db(self):
         self.db_path.parent.mkdir(exist_ok=True, parents=True)
-        with sqlite3.connect(self.db_path) as con:
+        with self._connect() as con:
             cur = con.cursor()
-            cur.execute("PRAGMA foreign_keys = ON")
             cur.execute("""CREATE TABLE IF NOT EXISTS url(
                     short_url text PRIMARY KEY NOT NULL,
                     redirect text NOT NULL,
