@@ -6,6 +6,8 @@ from pathlib import Path
 from secrets import token_urlsafe
 import sqlite3
 
+from src.exceptions import AddURLError
+
 
 class URLShortener:
     def __init__(self, db_path: Path, url_bytes: int = 6):
@@ -33,7 +35,7 @@ class URLShortener:
             except sqlite3.IntegrityError:
                 continue
         else:
-            raise Exception("Failed to make new shortened url")
+            raise AddURLError("Failed to make new shortened url")
 
     def get_redirect(self, short_url: str) -> str | None:
         with self._connect() as con:

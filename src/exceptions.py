@@ -1,0 +1,2 @@
+class AddURLError(Exception):
+    pass
