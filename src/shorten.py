@@ -1,6 +1,7 @@
 from collections.abc import Generator
 from contextlib import closing, contextmanager
 import datetime
+import html
 from pathlib import Path
 import random
 import string
@@ -78,7 +79,7 @@ class URLShortener:
                 ORDER BY u.time_created, u.rowid
                 """)
             stats = cur.fetchall()
-        html = """
+        page = """
             <html>
             <head><title>Item Table</title></head>
             <body>
@@ -87,10 +88,10 @@ class URLShortener:
                 <tr><th>Time created</th><th>Short URL</th><th>Redirect</th><th>Times redirected</th></tr>
             """
         for time_created, short_url, redirect, total in stats:
-            html += f"<tr><td>{time_created}</td><td>{short_url}</td><td>{redirect}</td><td>{total}</td></tr>"
+            page += f"<tr><td>{html.escape(time_created)}</td><td>{html.escape(short_url)}</td><td>{html.escape(redirect)}</td><td>{html.escape(str(total))}</td></tr>"
 
-        html += "</table></body></html>"
-        return html
+        page += "</table></body></html>"
+        return page
 
     def init_db(self):
         self.db_path.parent.mkdir(exist_ok=True, parents=True)
