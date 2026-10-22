@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 import sqlite3
 import string
 import tempfile
@@ -53,7 +54,7 @@ class TestURLShortener(unittest.TestCase):
         short_url = self.shortener.shorten_url("https://google.com")
 
         self.assertLessEqual(len(short_url), 8)
-        self.assertTrue(set(short_url) <= set(string.ascii_letters + string.digits))
+        self.assertTrue(re.fullmatch(r"[A-Za-z0-9\-._~]+", short_url) is not None)
 
     def test_collision_retries(self):
         codes = ["aaaaaa", "aaaaaa", "bbbbbb"]

@@ -29,7 +29,6 @@ class URLShortener:
         for _ in range(10):
             short_url = self._generate_code()
             try:
-                print(f"LOOK HERE {short_url}")
                 self.add_to_db(short_url, url)
                 return short_url
             except sqlite3.IntegrityError:
