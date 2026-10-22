@@ -21,15 +21,17 @@ class URLShortener:
             yield con
 
     def shorten_url(self, url: str) -> str:
-        all_short_urls = self.get_short_urls()
-        while True:
+        for _ in range(10):
             short_url = "".join(
                 random.choices(string.ascii_letters + string.digits, k=self.url_length)
             )
-            if short_url in all_short_urls:
+            try:
+                self.add_to_db(short_url, url)
+                return short_url
+            except sqlite3.IntegrityError:
                 continue
-            self.add_to_db(short_url, url)
-            return short_url
+        else:
+            raise Exception("Failed to make new shortened url")
 
     def get_redirect(self, short_url: str) -> str | None:
         with self._connect() as con:
