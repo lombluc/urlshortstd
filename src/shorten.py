@@ -48,13 +48,6 @@ class URLShortener:
             return res[0][0]
         return None
 
-    def get_short_urls(self) -> set:
-        with self._connect() as con:
-            cur = con.cursor()
-            cur.execute("SELECT short_url FROM url")
-            col = cur.fetchall()
-        return set(r[0] for r in col)
-
     def add_to_db(self, short_url: str, redirect: str) -> None:
         with self._connect() as con:
             cur = con.cursor()
