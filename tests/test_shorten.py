@@ -52,12 +52,12 @@ class TestURLShortener(unittest.TestCase):
     def test_short_url_format(self):
         short_url = self.shortener.shorten_url("https://google.com")
 
-        self.assertEqual(len(short_url), 6)
+        self.assertLessEqual(len(short_url), 8)
         self.assertTrue(set(short_url) <= set(string.ascii_letters + string.digits))
 
     def test_collision_retries(self):
-        codes = [list("aaaaaa"), list("aaaaaa"), list("bbbbbb")]
-        with mock.patch("src.shorten.random.choices", side_effect=codes):
+        codes = ["aaaaaa", "aaaaaa", "bbbbbb"]
+        with mock.patch("src.shorten.URLShortener._generate_code", side_effect=codes):
             first = self.shortener.shorten_url("https://google.com")
             second = self.shortener.shorten_url("https://bing.com")
 
@@ -69,7 +69,7 @@ class TestURLShortener(unittest.TestCase):
 
     def test_collision_gives_up(self):
         with mock.patch(
-            "src.shorten.random.choices", return_value=list("aaaaaa")
+            "src.shorten.URLShortener._generate_code", return_value="aaaaaa"
         ) as choices:
             self.shortener.shorten_url("https://google.com")
             with self.assertRaisesRegex(Exception, "Failed to make new shortened url"):

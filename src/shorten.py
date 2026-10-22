@@ -3,14 +3,13 @@ from contextlib import closing, contextmanager
 import datetime
 import html
 from pathlib import Path
-import random
-import string
+from secrets import token_urlsafe
 import sqlite3
 
 
 class URLShortener:
-    def __init__(self, db_path: Path, url_length: int = 6):
-        self.url_length = url_length
+    def __init__(self, db_path: Path, url_bytes: int = 6):
+        self.url_bytes = url_bytes
         self.db_path = db_path
         self.init_db()
 
@@ -21,12 +20,14 @@ class URLShortener:
             cur.execute("PRAGMA foreign_keys = ON")
             yield con
 
+    def _generate_code(self) -> str:
+        return token_urlsafe(self.url_bytes)
+
     def shorten_url(self, url: str) -> str:
         for _ in range(10):
-            short_url = "".join(
-                random.choices(string.ascii_letters + string.digits, k=self.url_length)
-            )
+            short_url = self._generate_code()
             try:
+                print(f"LOOK HERE {short_url}")
                 self.add_to_db(short_url, url)
                 return short_url
             except sqlite3.IntegrityError:
