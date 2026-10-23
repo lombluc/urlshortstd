@@ -5,8 +5,10 @@ from pathlib import Path
 import sqlite3
 import time
 import unittest
+from unittest import mock
 
 from src.app import URLHandler
+from src.exceptions import AddURLError
 from src.shorten import URLShortener
 from tests.html_table_parser import HTMLTableParser
 
@@ -24,13 +26,23 @@ class TestE2E(unittest.TestCase):
             con.commit()
 
     def make_request(
-        self, method: str, url: str, body: str, headers: dict
+        self, method: str, url: str, body: str | bytes, headers: dict
     ) -> http.client.HTTPResponse:
         con = http.client.HTTPConnection("localhost", server_port)
         con.request(method, url, body, headers)
         response = con.getresponse()
         con.close()
         return response
+
+    def shorten(
+        self, body: str | bytes, headers: dict | None = None
+    ) -> http.client.HTTPResponse:
+        return self.make_request(
+            "POST",
+            "/shorten",
+            body,
+            {"Content-Type": "application/json", **(headers or {})},
+        )
 
     def compare_stats_tables(self, ref_path: str, res_html: str):
         parser = HTMLTableParser()
@@ -128,6 +140,68 @@ class TestE2E(unittest.TestCase):
         self.compare_stats_tables(
             "tests/data/multiple_redirects.txt", response.read().decode()
         )
+
+    def test_shorten_bad_body(self):
+        bad_bodies = [
+            b"",
+            b"not json",
+            b"\xff\xfe",
+            b"[1]",
+            b"5",
+            b'"url"',
+            b"{}",
+            b'{"url": null}',
+            b'{"url": 5}',
+            b'{"url": ["https://google.com"]}',
+        ]
+        for body in bad_bodies:
+            with self.subTest(body=body):
+                response = self.shorten(body)
+                self.assertEqual(response.status, 400)
+
+        # server should still be working after bad requests
+        response = self.shorten('{"url": "https://google.com"}')
+        self.assertEqual(response.status, 200)
+
+    def test_shorten_bad_content_length(self):
+        cases = [("abc", 400), ("-1", 400), (str(URLHandler.max_body_bytes + 1), 413)]
+        for content_length, expected_status in cases:
+            with self.subTest(content_length=content_length):
+                response = self.shorten(
+                    '{"url": "https://google.com"}',
+                    {"Content-Length": content_length},
+                )
+                self.assertEqual(response.status, expected_status)
+
+        self.assertEqual(self.count_rows("url"), 0)
+
+    def test_shorten_add_url_error(self):
+        with mock.patch.object(
+            URLHandler.url_shortener,
+            "shorten_url",
+            side_effect=AddURLError("Failed to make new shortened url"),
+        ):
+            response = self.shorten('{"url": "https://google.com"}')
+        self.assertEqual(response.status, 500)
+
+        response = self.shorten('{"url": "https://google.com"}')
+        self.assertEqual(response.status, 200)
+
+    def test_stats_non_ascii(self):
+        # http.client sends str bodies as latin-1, so encode as utf-8 explicitly
+        response = self.shorten('{"url": "https://example.com/café"}'.encode("utf-8"))
+        self.assertEqual(response.status, 200)
+
+        response = self.make_request("GET", "/stats", "", {})
+        page = response.read().decode()
+
+        # a Content-Length counted in characters rather than bytes truncates the page
+        self.assertTrue(page.endswith("</html>"))
+        self.assertIn("https://example.com/café", page)
+
+    def count_rows(self, table: str) -> int:
+        with sqlite3.connect(test_db_path) as con:
+            return con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
 
 
 def setUpModule():
